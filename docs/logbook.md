@@ -15,7 +15,7 @@ pio run
 pio run --target upload
 
 ## Monitor command
-pio device monitor --baud 115200
+pio device monitor --baud 115200 --echo
 
 ## Observed output
 ### lsusb
