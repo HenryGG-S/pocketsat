@@ -1,28 +1,44 @@
-# Board bring-up log
+# Bring-up Log
 
 ## Date
-2026-06-05
+11-06-2026
 
 ## Board
-ELEGOO UNO R3 compatible board
+NUCLEO-F401RE
 
-## Port
-/dev/ttyACM0
+## Toolchain
 
-## Build/upload command
-arduino-cli upload -p /dev/ttyACM0 --fqbn arduino:avr:uno firmware/arduino_trainer
+## Build command
+pio run
+
+## Flash command
+pio run --target upload
 
 ## Monitor command
-arduino-cli monitor -p /dev/ttyACM0 -c baudrate=115200
+pio device monitor --baud 115200
 
 ## Observed output
-EVENT,BOOT
-FW,NAME=arduino-trainer-mk0,VERSION=0.1.0
-BOARD,TYPE=UNO_R3
-MODE,current=BOOT
-TLM,HEALTH,tick=1000,counter=1
-...
+### lsusb
+Bus 001 Device 013: ID 0483:374b STMicroelectronics ST-LINK/V2.1
+### tty device
+/dev/ttyACM0
 
-## Notes
-Opening the serial monitor can reset the UNO due to DTR/RTS.
-Occasional initial garbage bytes or partial lines are expected when attaching mid-stream.
+## Date
+12-06-2026
+
+## LED stuck on
+
+Observed:
+LED turned on but did not blink.
+
+Hypothesis:
+Main loop reached the first GPIO toggle, then blocked inside HAL_Delay.
+
+Cause:
+HAL_Delay depends on the HAL millisecond tick. The SysTick interrupt handler was missing or not incrementing the HAL tick.
+
+Fix:
+Added SysTick_Handler calling HAL_IncTick.
+
+Lesson:
+A blocking delay depends on interrupt/tick infrastructure. GPIO can work while timekeeping is broken.
