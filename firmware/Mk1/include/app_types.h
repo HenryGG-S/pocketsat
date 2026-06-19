@@ -29,11 +29,19 @@ typedef struct
     int16_t gz;
 } ImuSample;
 
+typedef enum
+{
+    TELEMETRY_FORMAT_ASCII = 0,
+    TELEMETRY_FORMAT_BINARY
+} TelemetryFormat;
+
 typedef struct
 {
     uint32_t telemetry_seq;
     uint32_t event_seq;
     uint32_t command_seq;
+    uint16_t packet_seq;
+    TelemetryFormat format;
 } TelemetryState;
 
 typedef struct

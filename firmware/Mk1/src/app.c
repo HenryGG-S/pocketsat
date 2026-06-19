@@ -60,21 +60,29 @@ void app_tick(AppState *app)
 
     if ((now - last_health_tick) >= HEALTH_PERIOD_MS)
     {
-        char fields[128];
-
         last_health_tick = now;
         health_counter++;
 
         board_heartbeat_toggle();
 
-        snprintf(fields,
-                 sizeof(fields),
-                 "counter=%lu,mode=%s,fault=%s",
-                 (unsigned long)health_counter,
-                 mode_to_string(app->mode),
-                 fault_to_string(app->fault));
+        if (app->telemetry.format == TELEMETRY_FORMAT_BINARY)
+        {
+            telemetry_binary_health(app, health_counter);
+        }
+        else
+        {
+            char fields[128];
 
-        telemetry_tlm(app, "HEALTH", fields);
+            snprintf(fields,
+                     sizeof(fields),
+                     "counter=%lu,mode=%s,fault=%s",
+                     (unsigned long)health_counter,
+                     mode_to_string(app->mode),
+                     fault_to_string(app->fault));
+
+            telemetry_tlm(app, "HEALTH", fields);
+        }
+
         lcd_refresh(app);
 
         health_manager_note_health_task(app);

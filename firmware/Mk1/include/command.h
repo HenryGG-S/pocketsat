@@ -20,6 +20,7 @@ typedef enum
     CMD_SET_MODE,
     CMD_INJECT_FAULT,
     CMD_CLEAR_FAULTS,
+    CMD_SET_TLM_FORMAT,
     CMD_TEST_WATCHDOG_ARM,
     CMD_TEST_WATCHDOG_TRIGGER
 } CommandId;
@@ -29,6 +30,7 @@ typedef struct
     CommandId id;
     SystemMode requested_mode;
     SystemFault requested_fault;
+    TelemetryFormat requested_tlm_format;
 } ParsedCommand;
 
 void command_process_byte(

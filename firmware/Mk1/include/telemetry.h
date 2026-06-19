@@ -4,6 +4,8 @@
 #include "app_types.h"
 #include <stdint.h>
 
+const char *telemetry_format_to_string(TelemetryFormat format);
+
 void telemetry_emit(AppState *app, const char *prefix, const char *fields);
 
 void telemetry_tlm(AppState *app, const char *type, const char *fields);
@@ -25,5 +27,7 @@ void telemetry_deny(AppState *app,
                     uint32_t cmd_seq,
                     const char *reason,
                     const char *detail);
+
+void telemetry_binary_health(AppState *app, uint32_t health_counter);
 
 #endif

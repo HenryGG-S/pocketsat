@@ -13,6 +13,7 @@ void board_delay_ms(uint32_t delay_ms);
 void board_heartbeat_toggle(void);
 
 void board_uart_write(const char *text);
+void board_uart_write_bytes(const uint8_t *data, uint16_t size);
 uint8_t board_uart_receive_byte(uint8_t *byte);
 
 HAL_StatusTypeDef board_i2c_mem_read(uint16_t dev_addr,

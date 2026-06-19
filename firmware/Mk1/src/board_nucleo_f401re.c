@@ -67,6 +67,16 @@ void board_uart_write(const char *text)
         &huart2, (uint8_t *)text, (uint16_t)strlen(text), HAL_MAX_DELAY);
 }
 
+void board_uart_write_bytes(const uint8_t *data, uint16_t size)
+{
+    if (data == NULL || size == 0u)
+    {
+        return;
+    }
+
+    HAL_UART_Transmit(&huart2, (uint8_t *)data, size, HAL_MAX_DELAY);
+}
+
 uint8_t board_uart_receive_byte(uint8_t *byte)
 {
     uint8_t result = 0u;

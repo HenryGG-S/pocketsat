@@ -105,3 +105,25 @@ Observed:
 - Date:
 - Firmware version:
 - Result:
+
+## REQ-TLM-007 — Binary health telemetry can be decoded
+
+Procedure:
+1. Flash firmware.
+2. Open USART2/ST-LINK serial at 115200 baud with binary capture enabled.
+3. Send `GET_HEALTH` and confirm normal ASCII health detail response.
+4. Send `SET_TLM_FORMAT BINARY`.
+5. Capture several seconds of serial output to a binary file.
+6. Decode the capture using `python3 scripts/decode_packets.py <capture.bin>`.
+7. Send `SET_TLM_FORMAT ASCII` and confirm ASCII health telemetry resumes.
+
+Expected:
+- `SET_TLM_FORMAT BINARY` returns an ASCII ACK.
+- Periodic health telemetry is emitted as binary packet type `0x01`.
+- Decoder reports valid CRCs and sensible `mode`, `fault`, `tick_ms`, and UART RX diagnostics.
+- Operator commands remain usable while binary health telemetry is enabled.
+
+Observed:
+- Date:
+- Firmware version:
+- Result:

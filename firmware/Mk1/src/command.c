@@ -138,6 +138,7 @@ ParsedCommand command_parse(const char *line)
     cmd.id = CMD_INVALID;
     cmd.requested_mode = MODE_SAFE;
     cmd.requested_fault = FAULT_NONE;
+    cmd.requested_tlm_format = TELEMETRY_FORMAT_ASCII;
 
     if (strcmp(line, "PING") == 0)
     {
@@ -208,6 +209,16 @@ ParsedCommand command_parse(const char *line)
     else if (strcmp(line, "CLEAR_FAULTS") == 0)
     {
         cmd.id = CMD_CLEAR_FAULTS;
+    }
+    else if (strcmp(line, "SET_TLM_FORMAT ASCII") == 0)
+    {
+        cmd.id = CMD_SET_TLM_FORMAT;
+        cmd.requested_tlm_format = TELEMETRY_FORMAT_ASCII;
+    }
+    else if (strcmp(line, "SET_TLM_FORMAT BINARY") == 0)
+    {
+        cmd.id = CMD_SET_TLM_FORMAT;
+        cmd.requested_tlm_format = TELEMETRY_FORMAT_BINARY;
     }
     else if (strcmp(line, "TEST_WATCHDOG ARM") == 0)
     {
@@ -308,6 +319,21 @@ void command_execute(const ParsedCommand *cmd, AppState *app, uint32_t cmd_seq)
             clear_faults_operator(app, cmd_seq);
             lcd_show_status_page(app);
             break;
+
+        case CMD_SET_TLM_FORMAT:
+        {
+            char details[32];
+
+            app->telemetry.format = cmd->requested_tlm_format;
+
+            snprintf(details,
+                     sizeof(details),
+                     "format=%s",
+                     telemetry_format_to_string(app->telemetry.format));
+
+            telemetry_ack_detail(app, cmd_seq, "SET_TLM_FORMAT", details);
+            break;
+        }
 
         case CMD_TEST_WATCHDOG_ARM:
             if (app->mode != MODE_SAFE)
