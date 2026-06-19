@@ -13,6 +13,7 @@
 static void command_handle_line(const char *line, AppState *app);
 static void
 command_make_input_detail(const char *line, char *detail, size_t detail_size);
+static uint8_t watchdog_test_armed = 0u;
 
 void command_process_byte(
     uint8_t byte, char *buffer, size_t *length, size_t capacity, AppState *app)
@@ -208,6 +209,14 @@ ParsedCommand command_parse(const char *line)
     {
         cmd.id = CMD_CLEAR_FAULTS;
     }
+    else if (strcmp(line, "TEST_WATCHDOG ARM") == 0)
+    {
+        cmd.id = CMD_TEST_WATCHDOG_ARM;
+    }
+    else if (strcmp(line, "TEST_WATCHDOG TRIGGER") == 0)
+    {
+        cmd.id = CMD_TEST_WATCHDOG_TRIGGER;
+    }
 
     return cmd;
 }
@@ -299,6 +308,34 @@ void command_execute(const ParsedCommand *cmd, AppState *app, uint32_t cmd_seq)
             clear_faults(app, cmd_seq);
             lcd_show_status_page(app);
             break;
+
+        case CMD_TEST_WATCHDOG_ARM:
+            if (app->mode != MODE_SAFE)
+            {
+                telemetry_deny(app, cmd_seq, "MODE_NOT_SAFE", "required=SAFE");
+                break;
+            }
+
+            watchdog_test_armed = 1u;
+            telemetry_ack(app, cmd_seq, "TEST_WATCHDOG ARM");
+            break;
+
+        case CMD_TEST_WATCHDOG_TRIGGER:
+            if (watchdog_test_armed == 0u)
+            {
+                telemetry_deny(app, cmd_seq, "WATCHDOG_TEST_NOT_ARMED", "");
+                break;
+            }
+
+            telemetry_ack(app, cmd_seq, "TEST_WATCHDOG TRIGGER");
+
+            while (1)
+            {
+                /*
+                 * Intentional stall.
+                 * Do not kick watchdog.
+                 */
+            }
 
         default:
             telemetry_reject(app, cmd_seq, "CMD_NOT_IMPLEMENTED");

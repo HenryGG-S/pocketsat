@@ -19,7 +19,9 @@ typedef enum
     CMD_GET_SENSOR_STATUS,
     CMD_SET_MODE,
     CMD_INJECT_FAULT,
-    CMD_CLEAR_FAULTS
+    CMD_CLEAR_FAULTS,
+    CMD_TEST_WATCHDOG_ARM,
+    CMD_TEST_WATCHDOG_TRIGGER
 } CommandId;
 
 typedef struct
