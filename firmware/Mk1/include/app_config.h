@@ -5,6 +5,7 @@
 #define FW_VERSION "0.5.0"
 
 #define COMMAND_BUFFER_SIZE (64u)
+#define UART_RX_RING_SIZE (256u)
 
 #define HEALTH_PERIOD_MS (1000u)
 #define SENSOR_CHECK_PERIOD_MS (3000u)

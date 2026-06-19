@@ -13,14 +13,6 @@ typedef enum
 
 typedef enum
 {
-    FAULT_NONE = 0,
-    FAULT_SENSOR_MISSING,
-    FAULT_OVERTEMP,
-    FAULT_COMMAND_STORM
-} SystemFault;
-
-typedef enum
-{
     SENSOR_OK = 0,
     SENSOR_MISSING,
     SENSOR_BAD_ID

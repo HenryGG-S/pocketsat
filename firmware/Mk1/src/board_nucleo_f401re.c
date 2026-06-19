@@ -5,6 +5,11 @@
 
 static UART_HandleTypeDef huart2;
 static I2C_HandleTypeDef hi2c1;
+static uint8_t uart_rx_it_byte = 0u;
+static volatile uint8_t uart_rx_ring[UART_RX_RING_SIZE];
+static volatile uint16_t uart_rx_head = 0u;
+static volatile uint16_t uart_rx_tail = 0u;
+static volatile uint32_t uart_rx_overflow_count = 0u;
 
 static void SystemClock_Config(void);
 static void GPIO_Init(void);
@@ -12,12 +17,19 @@ static void I2C1_GPIO_Init(void);
 static void USART2_UART_Init(void);
 static void I2C1_Init(void);
 static void Error_Handler(void);
+static void board_uart_rx_ring_push(uint8_t byte);
 
 void board_init(void)
 {
     SystemClock_Config();
     GPIO_Init();
     USART2_UART_Init();
+
+    if (HAL_UART_Receive_IT(&huart2, &uart_rx_it_byte, 1u) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
     I2C1_Init();
 }
 
@@ -54,12 +66,25 @@ void board_uart_write(const char *text)
 
 uint8_t board_uart_receive_byte(uint8_t *byte)
 {
+    uint8_t result = 0u;
+
     if (byte == NULL)
     {
         return 0u;
     }
 
-    return (HAL_UART_Receive(&huart2, byte, 1u, 0u) == HAL_OK) ? 1u : 0u;
+    __disable_irq();
+
+    if (uart_rx_tail != uart_rx_head)
+    {
+        *byte = uart_rx_ring[uart_rx_tail];
+        uart_rx_tail = (uint16_t)((uart_rx_tail + 1u) % UART_RX_RING_SIZE);
+        result = 1u;
+    }
+
+    __enable_irq();
+
+    return result;
 }
 
 HAL_StatusTypeDef board_i2c_mem_read(uint16_t dev_addr,
@@ -209,6 +234,9 @@ static void USART2_UART_Init(void)
     {
         Error_Handler();
     }
+
+    HAL_NVIC_SetPriority(USART2_IRQn, 5u, 0u);
+    HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
 
 static void I2C1_Init(void)
@@ -308,4 +336,50 @@ const char *board_reset_cause_to_string(BoardResetCause cause)
         default:
             return "INVALID";
     }
+}
+
+static void board_uart_rx_ring_push(uint8_t byte)
+{
+    uint16_t next_head = (uint16_t)((uart_rx_head + 1u) % UART_RX_RING_SIZE);
+
+    if (next_head == uart_rx_tail)
+    {
+        uart_rx_overflow_count++;
+        return;
+    }
+
+    uart_rx_ring[uart_rx_head] = byte;
+    uart_rx_head = next_head;
+}
+
+void USART2_IRQHandler(void)
+{
+    HAL_UART_IRQHandler(&huart2);
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance != USART2)
+    {
+        return;
+    }
+
+    board_uart_rx_ring_push(uart_rx_it_byte);
+
+    if (HAL_UART_Receive_IT(&huart2, &uart_rx_it_byte, 1u) != HAL_OK)
+    {
+        uart_rx_overflow_count++;
+    }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance != USART2)
+    {
+        return;
+    }
+
+    uart_rx_overflow_count++;
+
+    (void)HAL_UART_Receive_IT(&huart2, &uart_rx_it_byte, 1u);
 }

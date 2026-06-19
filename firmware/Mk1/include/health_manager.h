@@ -1,6 +1,7 @@
 #ifndef HEALTH_MANAGER_H
 #define HEALTH_MANAGER_H
 
+#include "app_config.h"
 #include "app_types.h"
 #include <stdint.h>
 
