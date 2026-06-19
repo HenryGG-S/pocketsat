@@ -305,7 +305,7 @@ void command_execute(const ParsedCommand *cmd, AppState *app, uint32_t cmd_seq)
         }
 
         case CMD_CLEAR_FAULTS:
-            clear_faults(app, cmd_seq);
+            clear_faults_operator(app, cmd_seq);
             lcd_show_status_page(app);
             break;
 

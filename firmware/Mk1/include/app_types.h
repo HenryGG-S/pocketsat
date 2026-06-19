@@ -61,11 +61,13 @@ typedef enum
 
 typedef struct
 {
+    uint32_t boot_ms;
     uint32_t last_app_tick_ms;
     uint32_t last_health_ms;
     uint32_t last_sensor_check_ms;
     uint32_t last_imu_sample_ms;
 
+    uint8_t app_tick_seen;
     uint8_t health_task_seen;
     uint8_t sensor_task_seen;
     uint8_t imu_task_seen;

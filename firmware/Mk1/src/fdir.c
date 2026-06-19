@@ -66,7 +66,7 @@ void raise_fault(AppState *app, SystemFault fault)
     }
 }
 
-void clear_faults(AppState *app, uint32_t cmd_seq)
+void clear_faults_operator(AppState *app, uint32_t cmd_seq)
 {
     SystemFault previous = app->fault;
 
@@ -107,4 +107,26 @@ uint8_t command_rate_note(CommandRateState *rate)
     }
 
     return (rate->count > COMMAND_STORM_LIMIT) ? 1u : 0u;
+}
+
+void clear_fault_if_current(AppState *app,
+                            SystemFault expected_fault,
+                            const char *reason)
+{
+    if (app->fault != expected_fault)
+    {
+        return;
+    }
+
+    app->fault = FAULT_NONE;
+
+    char event[128];
+
+    snprintf(event,
+             sizeof(event),
+             "type=FAULT_CLEARED,fault=%s,reason=%s",
+             fault_to_string(expected_fault),
+             reason);
+
+    telemetry_event(app, event);
 }

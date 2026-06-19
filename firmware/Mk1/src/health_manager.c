@@ -28,6 +28,7 @@ static void format_age_field(char *buffer,
 void health_manager_note_app_tick(AppState *app)
 {
     app->health.last_app_tick_ms = board_millis();
+    app->health.app_tick_seen = 1u;
 }
 
 void health_manager_note_health_task(AppState *app)
@@ -53,7 +54,7 @@ void health_manager_report(AppState *app, uint32_t cmd_seq)
     char health_age[32];
     char sensor_age[32];
     char imu_age[32];
-    char fields[192];
+    char fields[256];
 
     format_age_field(health_age,
                      sizeof(health_age),
@@ -75,11 +76,13 @@ void health_manager_report(AppState *app, uint32_t cmd_seq)
 
     snprintf(fields,
              sizeof(fields),
-             "cmd_seq=%lu,mode=%s,fault=%s,%s,%s,%s,uart_rx_used=%u,uart_rx_"
-             "overflows=%lu",
+             "cmd_seq=%lu,mode=%s,fault=%s,app_age_ms=%lu,app_tick_age_ms=%lu,%"
+             "s,%s,%s,uart_rx_used=%u,uart_rx_overflows=%lu",
              (unsigned long)cmd_seq,
              mode_to_string(app->mode),
              fault_to_string(app->fault),
+             (unsigned long)(board_millis() - app->health.boot_ms),
+             (unsigned long)(board_millis() - app->health.last_app_tick_ms),
              health_age,
              sensor_age,
              imu_age,
@@ -92,6 +95,30 @@ void health_manager_report(AppState *app, uint32_t cmd_seq)
 uint8_t health_manager_system_alive(const AppState *app)
 {
     uint32_t now = board_millis();
+    uint32_t age_since_boot = now - app->health.boot_ms;
+
+    /*
+     * The main loop itself must be ticking.
+     * This is the minimum condition for watchdog refresh.
+     */
+    if (app->health.app_tick_seen == 0u)
+    {
+        return 0u;
+    }
+
+    if ((now - app->health.last_app_tick_ms) > APP_TICK_TIMEOUT_MS)
+    {
+        return 0u;
+    }
+
+    /*
+     * During startup, not all periodic tasks are expected to have run yet.
+     * This prevents the watchdog from resetting before the first sensor check.
+     */
+    if (age_since_boot < WATCHDOG_STARTUP_GRACE_MS)
+    {
+        return 1u;
+    }
 
     if (app->health.health_task_seen == 0u)
     {
@@ -122,7 +149,6 @@ uint8_t health_manager_system_alive(const AppState *app)
 
     return 1u;
 }
-
 void health_manager_check_liveness(AppState *app)
 {
     uint32_t now = board_millis();

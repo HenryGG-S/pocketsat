@@ -66,7 +66,28 @@ Observed:
 - Firmware version:
 - Result:
 
-## REQ-SNS-005/006 — Cached IMU behaviour
+## REQ-FDIR-005 — Independent watchdog resets stalled application
+
+Procedure:
+1. Flash firmware with ENABLE_IWDG=1.
+2. Boot system and confirm stable SAFE mode operation.
+3. Send `TEST_WATCHDOG ARM`.
+4. Send `TEST_WATCHDOG TRIGGER`.
+
+Expected:
+- System acknowledges both commands.
+- Application intentionally stalls.
+- Independent watchdog resets MCU.
+- Boot telemetry reports reset_cause=IWDG.
+- System returns to SAFE.
+
+Observed:
+- Date: 2026-06-19
+- Firmware version: 0.5.0
+- Result: PASS
+- Notes:
+
+## REQ-SNS-006 — Cached IMU behaviour
 
 Procedure:
 1. Boot system.

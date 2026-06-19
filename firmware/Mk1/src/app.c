@@ -21,6 +21,7 @@ void app_init(AppState *app)
     app->mode = MODE_BOOT;
     app->fault = FAULT_NONE;
     app->lcd_page = LCD_PAGE_STATUS;
+    app->health.boot_ms = board_millis();
 
     lcd_init();
     lcd_show_status_page(app);

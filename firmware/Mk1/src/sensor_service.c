@@ -90,11 +90,8 @@ void sensor_check_and_report(AppState *app, uint32_t cmd_seq)
     {
         if (app->fault == FAULT_SENSOR_MISSING)
         {
-            app->fault = FAULT_NONE;
-
-            telemetry_event(app,
-                            "type=FAULT_CLEARED,fault=SENSOR_MISSING,reason="
-                            "sensor_recovered");
+            clear_fault_if_current(
+                app, FAULT_SENSOR_MISSING, "sensor_recovered");
 
             telemetry_event(app,
                             "type=RECOVERY_ACTION,action=remain_in_safe,reason="

@@ -7,7 +7,10 @@
 const char *fault_to_string(SystemFault fault);
 
 void raise_fault(AppState *app, SystemFault fault);
-void clear_faults(AppState *app, uint32_t cmd_seq);
+void clear_faults_operator(AppState *app, uint32_t cmd_seq);
+void clear_fault_if_current(AppState *app,
+                            SystemFault expected_fault,
+                            const char *reason);
 
 uint8_t command_rate_note(CommandRateState *rate);
 

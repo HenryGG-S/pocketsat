@@ -23,6 +23,8 @@
 #define SENSOR_TASK_TIMEOUT_MS (8000u)
 #define IMU_TASK_TIMEOUT_MS (3000u)
 
-#define ENABLE_IWDG (0u)
+#define ENABLE_IWDG (1u)
+#define WATCHDOG_STARTUP_GRACE_MS (10000u)
+#define APP_TICK_TIMEOUT_MS (500u)
 
 #endif
