@@ -5,6 +5,7 @@
 
 static UART_HandleTypeDef huart2;
 static I2C_HandleTypeDef hi2c1;
+static IWDG_HandleTypeDef hiwdg;
 static uint8_t uart_rx_it_byte = 0u;
 static volatile uint8_t uart_rx_ring[UART_RX_RING_SIZE];
 static volatile uint16_t uart_rx_head = 0u;
@@ -31,6 +32,8 @@ void board_init(void)
     }
 
     I2C1_Init();
+
+    board_watchdog_init();
 }
 
 void board_error_handler(void)
@@ -275,42 +278,48 @@ void SysTick_Handler(void)
 
 BoardResetCause board_reset_cause_get(void)
 {
-    if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) != RESET)
+    BoardResetCause cause = BOARD_RESET_UNKNOWN;
+
+    uint8_t iwdg = (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET);
+    uint8_t wwdg = (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST) != RESET);
+    uint8_t sftr = (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST) != RESET);
+    uint8_t por = (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) != RESET);
+    uint8_t bor = (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST) != RESET);
+    uint8_t pin = (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST) != RESET);
+    uint8_t lpwr = (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST) != RESET);
+
+    if (iwdg != 0u)
     {
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-        return BOARD_RESET_POWER_ON;
+        cause = BOARD_RESET_IWDG;
     }
-    else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST) != RESET)
+    else if (wwdg != 0u)
     {
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-        return BOARD_RESET_PIN;
+        cause = BOARD_RESET_WWDG;
     }
-    else if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST) != RESET)
+    else if (sftr != 0u)
     {
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-        return BOARD_RESET_SOFTWARE;
+        cause = BOARD_RESET_SOFTWARE;
     }
-    else if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET)
+    else if (bor != 0u)
     {
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-        return BOARD_RESET_IWDG;
+        cause = BOARD_RESET_BROWNOUT;
     }
-    else if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST) != RESET)
+    else if (por != 0u)
     {
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-        return BOARD_RESET_WWDG;
+        cause = BOARD_RESET_POWER_ON;
     }
-    else if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST) != RESET)
+    else if (pin != 0u)
     {
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-        return BOARD_RESET_BROWNOUT;
+        cause = BOARD_RESET_PIN;
     }
-    else if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWRRST) != RESET)
+    else if (lpwr != 0u)
     {
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-        return BOARD_RESET_LOW_POWER;
+        cause = BOARD_RESET_LOW_POWER;
     }
-    return BOARD_RESET_UNKNOWN;
+
+    __HAL_RCC_CLEAR_RESET_FLAGS();
+
+    return cause;
 }
 
 const char *board_reset_cause_to_string(BoardResetCause cause)
@@ -382,4 +391,59 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     uart_rx_overflow_count++;
 
     (void)HAL_UART_Receive_IT(&huart2, &uart_rx_it_byte, 1u);
+}
+
+uint32_t board_uart_rx_overflow_count(void)
+{
+    return uart_rx_overflow_count;
+}
+
+uint16_t board_uart_rx_buffer_used(void)
+{
+    uint16_t used = 0u;
+
+    __disable_irq();
+
+    if (uart_rx_head >= uart_rx_tail)
+    {
+        used = (uint16_t)(uart_rx_head - uart_rx_tail);
+    }
+    else
+    {
+        used = (uint16_t)(UART_RX_RING_SIZE - uart_rx_tail + uart_rx_head);
+    }
+
+    __enable_irq();
+
+    return used;
+}
+
+void board_watchdog_init(void)
+{
+#if ENABLE_IWDG
+    hiwdg.Instance = IWDG;
+
+    /*
+     * LSI is roughly 32 kHz.
+     * Prescaler 64 gives ~500 Hz watchdog counter.
+     * Reload 1000 gives roughly 2 seconds.
+     */
+    hiwdg.Init.Prescaler = IWDG_PRESCALER_64;
+    hiwdg.Init.Reload = 1000u;
+
+    if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+    {
+        Error_Handler();
+    }
+#endif
+}
+
+void board_watchdog_kick(void)
+{
+#if ENABLE_IWDG
+    if (HAL_IWDG_Refresh(&hiwdg) != HAL_OK)
+    {
+        Error_Handler();
+    }
+#endif
 }

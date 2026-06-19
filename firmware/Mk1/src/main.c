@@ -5,6 +5,7 @@
 #include "app_types.h"
 #include "board_nucleo_f401re.h"
 #include "command.h"
+#include "health_manager.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -37,10 +38,9 @@ int main(void)
                                  &app);
         }
 
-        // TODO: implement watchdog kick only if all tasks are alive
-        // if (health_manager_system_alive(&app) != 0u)
-        //{
-        //     board_watchdog_kick();
-        // }
+        if (health_manager_system_alive(&app) != 0u)
+        {
+            board_watchdog_kick();
+        }
     }
 }

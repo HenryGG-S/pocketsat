@@ -49,6 +49,9 @@ typedef enum
 BoardResetCause board_reset_cause_get(void);
 const char *board_reset_cause_to_string(BoardResetCause cause);
 
+uint32_t board_uart_rx_overflow_count(void);
+uint16_t board_uart_rx_buffer_used(void);
+
 void board_watchdog_init(void);
 void board_watchdog_kick(void);
 

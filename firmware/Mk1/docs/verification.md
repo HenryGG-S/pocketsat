@@ -50,7 +50,23 @@ Observed:
 - Firmware version:
 - Result:
 
-## REQ-SNS-004/005 — Cached IMU behaviour
+## REQ-FDIR-004 — App liveness fault enters SAFE
+
+Procedure:
+1. Artificially prevent a required periodic task from updating its health marker.
+2. Continue running the main loop.
+
+Expected:
+- FAULT_APP_STALL is raised.
+- Mode changes to SAFE if not already SAFE.
+- Telemetry reports fault=APP_STALL.
+
+Observed:
+- Date:
+- Firmware version:
+- Result:
+
+## REQ-SNS-005/006 — Cached IMU behaviour
 
 Procedure:
 1. Boot system.

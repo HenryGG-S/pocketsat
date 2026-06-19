@@ -75,25 +75,47 @@ void health_manager_report(AppState *app, uint32_t cmd_seq)
 
     snprintf(fields,
              sizeof(fields),
-             "cmd_seq=%lu,mode=%s,fault=%s,%s,%s,%s",
+             "cmd_seq=%lu,mode=%s,fault=%s,%s,%s,%s,uart_rx_used=%u,uart_rx_"
+             "overflows=%lu",
              (unsigned long)cmd_seq,
              mode_to_string(app->mode),
              fault_to_string(app->fault),
              health_age,
              sensor_age,
-             imu_age);
+             imu_age,
+             (unsigned int)board_uart_rx_buffer_used(),
+             (unsigned long)board_uart_rx_overflow_count());
 
     telemetry_tlm(app, "HEALTH_DETAIL", fields);
 }
 
 uint8_t health_manager_system_alive(const AppState *app)
 {
+    uint32_t now = board_millis();
+
     if (app->health.health_task_seen == 0u)
     {
         return 0u;
     }
 
+    if ((now - app->health.last_health_ms) > HEALTH_TASK_TIMEOUT_MS)
+    {
+        return 0u;
+    }
+
     if (app->health.sensor_task_seen == 0u)
+    {
+        return 0u;
+    }
+
+    if ((now - app->health.last_sensor_check_ms) > SENSOR_TASK_TIMEOUT_MS)
+    {
+        return 0u;
+    }
+
+    if ((app->mode == MODE_NOMINAL || app->mode == MODE_PAYLOAD) &&
+        app->health.imu_task_seen != 0u &&
+        (now - app->health.last_imu_sample_ms) > IMU_TASK_TIMEOUT_MS)
     {
         return 0u;
     }

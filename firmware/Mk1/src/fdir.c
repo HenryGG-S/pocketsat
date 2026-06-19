@@ -22,7 +22,8 @@ const char *fault_to_string(SystemFault fault)
 
         case FAULT_COMMAND_STORM:
             return "COMMAND_STORM";
-
+        case FAULT_APP_STALL:
+            return "APP_STALL";
         default:
             return "UNKNOWN";
     }
