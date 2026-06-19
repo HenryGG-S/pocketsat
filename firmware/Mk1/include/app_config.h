@@ -1,0 +1,27 @@
+#ifndef APP_CONFIG_H
+#define APP_CONFIG_H
+
+#define FW_NAME "pocketsat-mk1"
+#define FW_VERSION "0.5.0"
+
+#define COMMAND_BUFFER_SIZE (64u)
+
+#define HEALTH_PERIOD_MS (1000u)
+#define SENSOR_CHECK_PERIOD_MS (3000u)
+#define IMU_SAMPLE_PERIOD_MS (1000u)
+
+#define I2C_TIMEOUT_MS (100u)
+#define I2C_RECOVERY_DELAY_MS (1u)
+#define SENSOR_RETRY_DELAY_MS (50u)
+#define SENSOR_WAKE_DELAY_MS (100u)
+
+#define COMMAND_STORM_WINDOW_MS (1000u)
+#define COMMAND_STORM_LIMIT (8u)
+
+#define HEALTH_TASK_TIMEOUT_MS (2500u)
+#define SENSOR_TASK_TIMEOUT_MS (8000u)
+#define IMU_TASK_TIMEOUT_MS (3000u)
+
+#define ENABLE_IWDG (0u)
+
+#endif
